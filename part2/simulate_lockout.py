@@ -105,6 +105,66 @@ def simulate(events, maxretry=5, findtime_seconds=600, bantime_seconds=3600,
     return {"stats": dict(stats), "bans": bans, "blocked_logins": blocked_logins}
 
 
+def plot_blocked_bars(stats, path):
+    """Figure for the report: per-IP failed attempts under the proposed
+    lockout policy, split into blocked (never reached sshd) vs. got through.
+    Campaign IPs are shown individually; every other IP in the extract is
+    rolled into a single "all other IPs" bar so the chart stays readable."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    # Chart palette (dataviz skill): blocked/got-through is a good/bad state,
+    # not an arbitrary series, so it takes the fixed status pair rather than
+    # categorical hues.
+    color_good = "#0ca30c"
+    color_critical = "#d03b3b"
+    color_surface = "#fcfcfb"
+    color_muted = "#898781"
+    color_grid = "#e1e0d9"
+    color_baseline = "#c3c2b7"
+    color_text = "#0b0b0b"
+
+    campaign_ips = {"203.0.113.77", "198.51.100.8", "203.0.113.101", "198.51.100.140"}
+    rows = [(ip, s) for ip, s in stats.items() if ip in campaign_ips]
+    rows.sort(key=lambda kv: kv[1]["failed_seen"], reverse=True)
+
+    other_seen = sum(s["failed_seen"] for ip, s in stats.items() if ip not in campaign_ips)
+    other_blocked = sum(s["failed_blocked"] for ip, s in stats.items() if ip not in campaign_ips)
+    labels = [ip for ip, _ in rows] + ["all other IPs\n(12 IPs)"]
+    blocked = [s["failed_blocked"] for _, s in rows] + [other_blocked]
+    got_through = [s["failed_seen"] - s["failed_blocked"] for _, s in rows] + [other_seen - other_blocked]
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    y = range(len(labels))
+    bar_height = 0.6
+    # A thin surface-color edge between segments stands in for the "2px surface
+    # gap" mark spec - it separates the two stacked states without extra ink.
+    ax.barh(y, blocked, height=bar_height, color=color_good, edgecolor=color_surface, linewidth=1.5,
+            label="blocked by policy (never reached sshd)")
+    ax.barh(y, got_through, left=blocked, height=bar_height, color=color_critical,
+            edgecolor=color_surface, linewidth=1.5, label="got through to sshd")
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    ax.set_axisbelow(True)
+    ax.grid(axis="x", color=color_grid, linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color(color_baseline)
+    ax.spines["bottom"].set_color(color_baseline)
+    ax.tick_params(colors=color_muted, labelcolor=color_muted)
+    ax.set_xlabel("Failed password attempts", color=color_text)
+    ax.set_title("Failed attempts blocked under the proposed fail2ban policy\n"
+                 "(1_auth.log, Group BB)", color=color_text)
+    ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.12),
+              ncol=2, frameon=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Blocked-attempts figure written to {path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("logfile", nargs="?", default="../1_auth.log.txt",
@@ -119,6 +179,8 @@ def main():
                         help="Initial ban length in seconds (default 3600)")
     parser.add_argument("--no-increment", action="store_true",
                         help="Disable doubling of repeat-ban durations")
+    parser.add_argument("--plot", action="store_true",
+                        help="Also write output/lockout_blocked.png (needs matplotlib)")
     args = parser.parse_args()
 
     outdir = Path(args.outdir)
@@ -163,6 +225,9 @@ def main():
               f"(IPs with >5 other successful logins) - check before tightening.")
 
     print(f"Per-IP details written to {outdir / 'lockout_simulation.csv'}")
+
+    if args.plot:
+        plot_blocked_bars(result["stats"], outdir / "lockout_blocked.png")
 
 
 if __name__ == "__main__":

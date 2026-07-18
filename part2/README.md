@@ -37,7 +37,7 @@ layout as Part 1):
 
 ```
 python detector.py ../1_auth.log.txt --plot
-python simulate_lockout.py ../1_auth.log.txt
+python simulate_lockout.py ../1_auth.log.txt --plot
 ```
 
 `--outdir` defaults to `output/`, which is already populated from our last
@@ -108,7 +108,8 @@ That's why the detection layer and the key-only migration exist.
 |---|---|
 | `alerts.csv` | Every alert the three rules raise on the extract, with fire time, rule, severity, and evidence detail. |
 | `lockout_simulation.csv` | Per-IP replay results: attempts seen/blocked, logins blocked, bans issued. |
-| `detection_timeline.png` | The compromise window (Jul 11 23:13-23:47) with the moment each proposed layer fires marked on it. This is the Part 2 figure in the report. |
+| `detection_timeline.png` | The compromise window (Jul 11 23:13-23:47) with the moment each proposed layer fires marked on it. One of the two Part 2 figures in the report. |
+| `lockout_blocked.png` | Per-IP breakdown of failed attempts blocked vs. reaching sshd under the proposed policy, from `simulate_lockout.py --plot`. The other Part 2 figure in the report. |
 
 ## Assumptions and limitations
 

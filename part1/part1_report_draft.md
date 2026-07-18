@@ -48,8 +48,8 @@ compromise rather than noise.
 
 **It's not just that one IP.** Four source IPs, `203.0.113.77`,
 `198.51.100.8`, `203.0.113.101`, and `198.51.100.140`, are responsible
-for 2,935 of the 3,724 failed attempts in the whole extract, which is
-79%. Everything else sits in the 97-150 range (Figure 1,
+for 2,555 of the 3,724 failed attempts in the whole extract, which is
+69%. Everything else sits in the 84-113 range (Figure 1,
 `output/top_source_ips.png`). Two of those four IPs also tripped sshd's
 own `POSSIBLE BREAK-IN ATTEMPT!` reverse-DNS warning a combined 35 times.
 That's not something we inferred, sshd flagged it itself.
@@ -84,7 +84,7 @@ We want to be careful not to overclaim here, though. The log can't tell
 us who was behind `203.0.113.77`, and it can't confirm anything the
 attacker did beyond the one `sudo` command we can see. Actually, that
 command, `systemctl restart apache2`, turns out to be one of the more
-awkward findings in our analysis: it's run 61 other times across the
+awkward findings in our analysis: it's run 60 other times across the
 extract by accounts we have no reason to suspect, so on its own it looks
 completely ordinary. If we hadn't traced the authentication pattern
 leading up to it, we'd have no way of telling this particular instance

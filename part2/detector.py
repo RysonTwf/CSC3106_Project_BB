@@ -180,6 +180,20 @@ def write_alerts_csv(alerts, path):
             writer.writerow(row)
 
 
+# Chart palette (dataviz skill: validated hexes). The three vertical markers
+# below are states in a timeline (prevented / warned / breached), so they take
+# the fixed status trio rather than arbitrary categorical colors; the main
+# series takes the same categorical blue used in the Part 1 figures.
+COLOR_CATEGORICAL_BLUE = "#2a78d6"
+COLOR_STATUS_GOOD = "#0ca30c"
+COLOR_STATUS_WARNING = "#c98500"  # dark-band warning step - readable at 2px line weight on white
+COLOR_STATUS_CRITICAL = "#d03b3b"
+COLOR_TEXT_PRIMARY = "#0b0b0b"
+COLOR_TEXT_MUTED = "#898781"
+COLOR_GRID = "#e1e0d9"
+COLOR_BASELINE = "#c3c2b7"
+
+
 def plot_detection_timeline(events, alerts, path, ban_time=None):
     """Figure for the report: the window in which `deploy` was compromised,
     with markers for when each layer of the proposed response fires. Scoped
@@ -204,25 +218,33 @@ def plot_detection_timeline(events, alerts, path, ban_time=None):
     cumulative = list(range(1, len(fails) + 1))
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.step(fails, cumulative, where="post", color="#2c3e50",
+    ax.step(fails, cumulative, where="post", color=COLOR_CATEGORICAL_BLUE, linewidth=2,
             label=f"cumulative failed attempts from {ip}")
 
     r2 = [a for a in alerts if a["rule"] == "R2_high_volume_source"
           and a["source_ip"] == ip and t0 <= a["alert_time"] <= t1]
     if r2:
-        ax.axvline(r2[0]["alert_time"], color="#e67e22", linestyle="--",
+        ax.axvline(r2[0]["alert_time"], color=COLOR_STATUS_WARNING, linestyle="--", linewidth=2,
                    label=f"R2 alert ({r2[0]['alert_time']:%H:%M:%S})")
     if ban_time and t0 <= ban_time <= t1:
-        ax.axvline(ban_time, color="#27ae60", linestyle="-.",
+        ax.axvline(ban_time, color=COLOR_STATUS_GOOD, linestyle="-.", linewidth=2,
                    label=f"simulated fail2ban ban ({ban_time:%H:%M:%S})")
-    ax.axvline(incident["alert_time"], color="#c0392b", linestyle="-",
+    ax.axvline(incident["alert_time"], color=COLOR_STATUS_CRITICAL, linestyle="-", linewidth=2,
                label=f"actual successful login ({incident['alert_time']:%H:%M:%S})")
 
-    ax.set_xlabel(f"Time ({incident['alert_time']:%d %b})")
-    ax.set_ylabel("Cumulative failed attempts")
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", color=COLOR_GRID, linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color(COLOR_BASELINE)
+    ax.spines["bottom"].set_color(COLOR_BASELINE)
+    ax.tick_params(colors=COLOR_TEXT_MUTED, labelcolor=COLOR_TEXT_MUTED)
+    ax.set_xlabel(f"Time ({incident['alert_time']:%d %b})", color=COLOR_TEXT_PRIMARY)
+    ax.set_ylabel("Cumulative failed attempts", color=COLOR_TEXT_PRIMARY)
     ax.set_title(f"Compromise window for '{incident['username']}': when each "
-                 f"proposed layer fires\n(1_auth.log, Group BB)")
-    ax.legend(fontsize=8, loc="upper left")
+                 f"proposed layer fires\n(1_auth.log, Group BB)", color=COLOR_TEXT_PRIMARY)
+    legend = ax.legend(fontsize=8, loc="upper left", frameon=True, facecolor="#fcfcfb", edgecolor="none")
+    legend.get_frame().set_alpha(0.95)
     fig.autofmt_xdate()
     fig.tight_layout()
     fig.savefig(path, dpi=150)

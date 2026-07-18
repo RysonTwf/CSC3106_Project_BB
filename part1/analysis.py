@@ -24,6 +24,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")  # write PNGs without a display
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 # ---------------------------------------------------------------------------
 # Configuration and assumptions
@@ -337,19 +338,46 @@ def write_csv(rows, path):
         writer.writerows(rows)
 
 
+# Chart palette (dataviz skill: validated categorical + status hexes, six checks
+# passed via scripts/validate_palette.js). Kept as module constants so the three
+# report figures in this file read as one system rather than three ad-hoc charts.
+COLOR_CATEGORICAL_BLUE = "#2a78d6"
+COLOR_STATUS_CRITICAL = "#d03b3b"
+COLOR_TEXT_PRIMARY = "#0b0b0b"
+COLOR_TEXT_MUTED = "#898781"
+COLOR_GRID = "#e1e0d9"
+COLOR_BASELINE = "#c3c2b7"
+
+
+def _style_axes(ax, grid_axis):
+    """Shared chart chrome: hairline recessive gridlines, no top/right spines,
+    muted axis ink. Applied to every figure so they read as one system."""
+    ax.set_axisbelow(True)
+    ax.grid(axis=grid_axis, color=COLOR_GRID, linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color(COLOR_BASELINE)
+    ax.spines["bottom"].set_color(COLOR_BASELINE)
+    ax.tick_params(colors=COLOR_TEXT_MUTED, labelcolor=COLOR_TEXT_MUTED)
+    ax.xaxis.label.set_color(COLOR_TEXT_PRIMARY)
+    ax.yaxis.label.set_color(COLOR_TEXT_PRIMARY)
+    ax.title.set_color(COLOR_TEXT_PRIMARY)
+
+
 def plot_top_source_ips(rows, path):
     rows = list(reversed(rows))  # largest at top of barh
     ips = [r["source_ip"] for r in rows]
     counts = [r["failed_password_count"] for r in rows]
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.barh(ips, counts, color="#c0392b")
+    bars = ax.barh(ips, counts, color=COLOR_CATEGORICAL_BLUE, height=0.6)
+    _style_axes(ax, grid_axis="x")
     ax.set_xlabel("Failed password attempts")
     ax.set_ylabel("Source IP address")
     ax.set_title("Top source IP addresses by failed authentication attempts\n(1_auth.log, Group BB)")
     for bar, count in zip(bars, counts):
         ax.text(bar.get_width() + max(counts) * 0.01, bar.get_y() + bar.get_height() / 2,
-                 str(count), va="center", fontsize=8)
+                 str(count), va="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -360,13 +388,14 @@ def plot_failed_attempts_over_time(rows, path):
     counts = [r["failed_password_count"] for r in rows]
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.bar(dates, counts, color="#2c3e50")
+    ax.bar(dates, counts, color=COLOR_CATEGORICAL_BLUE, width=0.6)
+    _style_axes(ax, grid_axis="y")
     ax.set_xlabel("Date")
     ax.set_ylabel("Failed password attempts")
     ax.set_title("Failed authentication attempts per day\n(1_auth.log, Group BB)")
     ax.tick_params(axis="x", rotation=30)
     for i, count in enumerate(counts):
-        ax.text(i, count + max(counts) * 0.01, str(count), ha="center", fontsize=8)
+        ax.text(i, count + max(counts) * 0.01, str(count), ha="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -376,16 +405,22 @@ def plot_targeted_usernames(rows, path):
     rows = list(reversed(rows))
     users = [r["username"] for r in rows]
     counts = [r["failed_password_count"] for r in rows]
-    colors = ["#c0392b" if r["privileged_account"] else "#2980b9" for r in rows]
+    colors = [COLOR_STATUS_CRITICAL if r["privileged_account"] else COLOR_CATEGORICAL_BLUE for r in rows]
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.barh(users, counts, color=colors)
+    bars = ax.barh(users, counts, color=colors, height=0.6)
+    _style_axes(ax, grid_axis="x")
     ax.set_xlabel("Failed password attempts")
     ax.set_ylabel("Targeted username")
-    ax.set_title("Top targeted usernames by failed authentication attempts\n(red = privileged/high-value account)")
+    ax.set_title("Top targeted usernames by failed authentication attempts")
+    legend_handles = [
+        Patch(facecolor=COLOR_STATUS_CRITICAL, label="Privileged / high-value account"),
+        Patch(facecolor=COLOR_CATEGORICAL_BLUE, label="Standard account"),
+    ]
+    ax.legend(handles=legend_handles, loc="lower right", fontsize=8, frameon=False)
     for bar, count in zip(bars, counts):
         ax.text(bar.get_width() + max(counts) * 0.01, bar.get_y() + bar.get_height() / 2,
-                 str(count), va="center", fontsize=8)
+                 str(count), va="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
