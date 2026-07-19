@@ -226,11 +226,12 @@ def plot_detection_timeline(events, alerts, path, ban_time=None):
     ax.set_ylabel("Cumulative failed attempts", color=COLOR_TEXT_PRIMARY)
     ax.set_title(f"Compromise window for '{incident['username']}': when each "
                  f"proposed layer fires\n(1_auth.log, Group BB)", color=COLOR_TEXT_PRIMARY)
-    legend = ax.legend(fontsize=8, loc="upper left", frameon=True, facecolor="#fcfcfb", edgecolor="none")
+    legend = ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.38),
+                       ncol=2, frameon=True, facecolor="#fcfcfb", edgecolor="none")
     legend.get_frame().set_alpha(0.95)
     fig.autofmt_xdate()
     fig.tight_layout()
-    fig.savefig(path, dpi=150)
+    fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Timeline figure written to {path}")
 
