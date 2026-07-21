@@ -155,8 +155,7 @@ def plot_blocked_bars(stats, path):
     ax.spines["bottom"].set_color(color_baseline)
     ax.tick_params(colors=color_muted, labelcolor=color_muted)
     ax.set_xlabel("Failed password attempts", color=color_text)
-    ax.set_title("Failed attempts blocked under the proposed fail2ban policy\n"
-                 "(1_auth.log, Group BB)", color=color_text)
+    ax.set_title("Failed attempts blocked under the proposed fail2ban policy", color=color_text)
     ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.12),
               ncol=2, frameon=False)
     fig.tight_layout()

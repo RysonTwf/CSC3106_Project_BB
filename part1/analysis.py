@@ -402,7 +402,7 @@ def plot_top_source_ips(rows, path):
     _style_axes(ax, grid_axis="x")
     ax.set_xlabel("Failed password attempts")
     ax.set_ylabel("Source IP address")
-    ax.set_title("Top source IP addresses by failed authentication attempts\n(1_auth.log, Group BB)")
+    ax.set_title("Top source IP addresses by failed authentication attempts")
     for bar, count in zip(bars, counts):
         ax.text(bar.get_width() + max(counts) * 0.01, bar.get_y() + bar.get_height() / 2,
                  str(count), va="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
@@ -420,7 +420,7 @@ def plot_failed_attempts_over_time(rows, path):
     _style_axes(ax, grid_axis="y")
     ax.set_xlabel("Date")
     ax.set_ylabel("Failed password attempts")
-    ax.set_title("Failed authentication attempts per day\n(1_auth.log, Group BB)")
+    ax.set_title("Failed authentication attempts per day")
     ax.tick_params(axis="x", rotation=30)
     for i, count in enumerate(counts):
         ax.text(i, count + max(counts) * 0.01, str(count), ha="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
