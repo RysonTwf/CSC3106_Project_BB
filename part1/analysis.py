@@ -135,7 +135,7 @@ def classify_line(process, message):
     return None, {}
 
 
-def parse_log(path):
+def parse_log(path, assumed_year=ASSUMED_YEAR):
     """Read the raw log file and return a list of event records plus a list
     of raw lines that could not be classified (kept for the limitations
     discussion and for reviewers to audit parsing coverage)."""
@@ -155,7 +155,7 @@ def parse_log(path):
 
             try:
                 ts = datetime.strptime(
-                    f"{m.group('month')} {m.group('day')} {m.group('time')} {ASSUMED_YEAR}",
+                    f"{m.group('month')} {m.group('day')} {m.group('time')} {assumed_year}",
                     "%b %d %H:%M:%S %Y",
                 )
             except ValueError:
@@ -226,14 +226,14 @@ def build_top_source_ips(events, top_n=TOP_N):
     return rows[:top_n]
 
 
-def build_targeted_usernames(events, top_n=TOP_N):
+def build_targeted_usernames(events, top_n=TOP_N, privileged_users=PRIVILEGED_USERS):
     failed = [e for e in events if e["event_type"] == "failed_password"]
     by_user = Counter(e["user"] for e in failed)
     rows = [
         {
             "username": user,
             "failed_password_count": count,
-            "privileged_account": user in PRIVILEGED_USERS,
+            "privileged_account": user in privileged_users,
         }
         for user, count in by_user.most_common(top_n)
     ]
@@ -250,11 +250,11 @@ def build_failed_attempts_over_time(events):
     return rows
 
 
-def build_privileged_targeting(events):
+def build_privileged_targeting(events, privileged_users=PRIVILEGED_USERS):
     relevant = [
         e for e in events
         if e["event_type"] in ("failed_password", "invalid_user", "accepted_password")
-        and e["user"] in PRIVILEGED_USERS
+        and e["user"] in privileged_users
     ]
     grouped = Counter((e["user"], e["event_type"]) for e in relevant)
     rows = [
@@ -476,23 +476,47 @@ def main():
         "--outdir", default="output",
         help="Directory to write generated tables and figures (default: output)",
     )
+    parser.add_argument(
+        "--streak-threshold", type=int, default=BRUTE_FORCE_STREAK_THRESHOLD,
+        help="Failed attempts from one IP in a single burst before a "
+             "following success is flagged as a suspected brute-force "
+             f"compromise (default {BRUTE_FORCE_STREAK_THRESHOLD})",
+    )
+    parser.add_argument(
+        "--burst-gap-minutes", type=int, default=BURST_GAP_MINUTES,
+        help="Minutes between consecutive failed attempts from the same IP "
+             "before a new burst is started; same meaning as "
+             f"part2/detector.py's flag of the same name (default {BURST_GAP_MINUTES})",
+    )
+    parser.add_argument(
+        "--assumed-year", type=int, default=ASSUMED_YEAR,
+        help="Year to assume for timestamps that omit one, e.g. syslog's "
+             f"'Jul 06 00:04:33' (default {ASSUMED_YEAR})",
+    )
+    parser.add_argument(
+        "--privileged-users", default=",".join(sorted(PRIVILEGED_USERS)),
+        help="Comma-separated usernames to treat as privileged/high-value "
+             f"(default: {','.join(sorted(PRIVILEGED_USERS))})",
+    )
     args = parser.parse_args()
 
     log_path = Path(args.logfile)
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    privileged_users = {u.strip() for u in args.privileged_users.split(",") if u.strip()}
 
     with open(log_path, "r", encoding="utf-8", errors="replace") as f:
         total_lines = sum(1 for _ in f)
 
-    events, unmatched = parse_log(log_path)
+    events, unmatched = parse_log(log_path, assumed_year=args.assumed_year)
 
     summary_counts = build_summary_counts(events, unmatched, total_lines)
     top_ips = build_top_source_ips(events)
-    targeted_users = build_targeted_usernames(events)
+    targeted_users = build_targeted_usernames(events, privileged_users=privileged_users)
     over_time = build_failed_attempts_over_time(events)
-    privileged = build_privileged_targeting(events)
-    brute_force = build_brute_force_success(events)
+    privileged = build_privileged_targeting(events, privileged_users=privileged_users)
+    brute_force = build_brute_force_success(events, streak_threshold=args.streak_threshold,
+                                             burst_gap_minutes=args.burst_gap_minutes)
     sudo_cmds = build_sudo_commands(events)
 
     write_csv(summary_counts, outdir / "summary_counts.csv")

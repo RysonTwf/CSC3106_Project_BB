@@ -77,8 +77,8 @@ of those top accounts turn out to have `sudo` rights (we can see this in
 anywhere in the extract, so at least on paper root itself held.
 
 **And it comes in bursts, not a steady drip.** 7 July alone accounts for
-1,161 failed attempts, more than the next two busiest days combined
-(779 on the 8th), while quieter days like the 9th sit around 165
+1,161 failed attempts, more than the next busiest day (779 on the 8th),
+while quieter days like the 9th sit around 165
 (Figure 3, `output/failed_attempts_over_time.csv`). Whatever's hitting
 `web01` isn't a constant background hum. It ramps up and dies down.
 

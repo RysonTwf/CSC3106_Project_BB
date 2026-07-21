@@ -40,6 +40,15 @@ python analysis.py
 last run. Rerunning just overwrites it, so don't worry about stale
 files hanging around.
 
+The brute-force streak threshold (`--streak-threshold`, default 10), the
+burst-grouping gap (`--burst-gap-minutes`, default 30), the assumed year for
+timestamps (`--assumed-year`, default 2026), and the privileged-account list
+(`--privileged-users`, comma-separated, default
+`deploy,ops,root,sysadmin,webadmin`) are all argparse flags rather than
+values you'd need to edit the script for, so a review team can re-tune them
+against a different extract without touching the code - same reasoning as
+the thresholds in `part2/detector.py`.
+
 ## What the script actually does
 
 Broadly: it reads the raw file, splits every line into the syslog prefix
