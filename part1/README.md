@@ -1,8 +1,7 @@
 # Part 1 - Data-Driven Authentication Log Analysis (Group BB)
 
 This is the reproducible-evidence part of our Part 1 submission for the
-CSC3106 mini-project. We're Group BB, which per the spec (Table 1) means
-we got `1_auth.log`.
+CSC3106 mini-project. We're Group BB, using `1_auth.log`.
 
 ## What you need
 
@@ -37,8 +36,7 @@ python analysis.py
 ```
 
 `--outdir` defaults to `output/`, which is already populated from our
-last run. Rerunning just overwrites it, so don't worry about stale
-files hanging around.
+last run.
 
 The brute-force streak threshold (`--streak-threshold`, default 10), the
 burst-grouping gap (`--burst-gap-minutes`, default 30), the assumed year for
@@ -77,8 +75,7 @@ different process entirely.
   logs that once per connection regardless of how many password guesses
   follow it, so counting both would have double-counted the same
   connection.
-- **Usernames and IPs** come straight from the regex match, nothing
-  normalised or guessed. So if a username in the log is a typo or
+- **Usernames and IPs** come straight from the regex match. So if a username in the log is a typo or
   something an attacker made up, it shows up verbatim rather than us
   trying to "clean" it.
 - **Lines we couldn't classify** get written out to
@@ -135,12 +132,10 @@ different process entirely.
   wouldn't generalise it to other hosts, and other groups working off the
   same base dataset will have different extracts and different findings.
 - The source IPs are all in RFC 5737 documentation ranges (192.0.2.0/24,
-  198.51.100.0/24, 203.0.113.0/24). Makes sense for a sanitised teaching
-  dataset, but it also means geolocation/reputation lookups would be
-  meaningless even if we wanted to do them.
+  198.51.100.0/24, 203.0.113.0/24).
 - We can't actually prove from the log alone that the `deploy` login was
   illegitimate. The burst-then-success pattern is strong circumstantial
-  evidence, but it's not a smoking gun in the strictest sense.
+  evidence, but it's not absolute proof.
 - The one sudo command we can see from the compromised session
   (`systemctl restart apache2`) is identical to commands run by
   legitimate accounts elsewhere in the log, so command content alone

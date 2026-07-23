@@ -18,13 +18,12 @@ Policy modelled (same shape as fail2ban's sshd jail):
   - any event from a banned IP (failed OR successful) is counted as blocked:
     a banned IP cannot reach sshd at all
 
-Honesty caveat, also spelled out in the report: this replays the traffic
-exactly as it happened. A real attacker who keeps getting banned would
-change behaviour (rotate IPs, slow down), so the right reading of these
-numbers is "this specific observed attack would have been interrupted", not
-"attacks like this become impossible". That residual risk is why the
-response also has a detection layer (detector.py) and a structural fix
-(key-only auth for privileged accounts, config/sshd_config.d/).
+This replays the traffic exactly as it happened. A real attacker who keeps
+getting banned would change behaviour (rotate IPs, slow down), so the right
+reading of these numbers is "this specific observed attack would have been
+interrupted", not "attacks like this become impossible". That residual risk
+is why the response also has a detection layer (detector.py) and a
+structural fix (key-only auth for privileged accounts, config/sshd_config.d/).
 
 Usage:
     python simulate_lockout.py [path-to-log-file] [--outdir OUTDIR]

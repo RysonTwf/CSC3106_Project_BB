@@ -55,7 +55,7 @@ reproduces the Part 1 headline finding exactly - 117 failed attempts from
 
 ## The detection rules, and why the thresholds are what they are
 
-We didn't want magic numbers, so every threshold is (a) an argparse flag a
+We didn't want hardcoded values with no explanations, so every threshold is (a) an argparse flag a
 review team can re-tune for a different extract, and (b) justified by a
 measured gap in our own data between legitimate and campaign behaviour:
 
@@ -83,7 +83,7 @@ measured gap in our own data between legitimate and campaign behaviour:
 
 Across the whole week the three rules produce **10 alerts total** (1
 CRITICAL, 5 HIGH, 4 MEDIUM), every one of them campaign activity. That
-matters: an alert stream noisy enough to be ignored is how 117 attempts go
+matters because an alert stream noisy enough to be ignored is how 117 attempts go
 unnoticed in the first place.
 
 ## What the lockout simulation showed

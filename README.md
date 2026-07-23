@@ -9,28 +9,24 @@ got in. Part 2 is a technical defensive response built directly off that
 finding: a rate-limit/lockout policy, a detection layer, and SSH hardening,
 each tested against the same extract rather than just proposed on paper.
 
-The written report (submitted separately, per the assignment's format) cites
-every figure and table below by filename so a marker can check any claim
-against the code and data that produced it.
-
 ## Layout
 
 ```
-1_auth.log.txt              our assigned log extract (12,000 lines, host web01, 6-12 Jul)
-part1/                      data-driven analysis: parsing, summary tables, 3 figures
-  analysis.py                the parser + analysis script
-  risk_matrix.md              asset-focused risk matrix, cross-referenced to part1/output/
-  output/                     generated CSVs and PNGs (rerun analysis.py to regenerate)
-  README.md                   parsing decisions, output-file reference, assumptions
-part2/                      technical defensive response to the Part 1 findings
-  detector.py                  "detect" layer: three alerting rules
-  simulate_lockout.py          tests the "prevent" layer against the real extract
-  authlog_parsing.py           parsing shared with Part 1, kept identical on purpose
-  config/                      "prevent"/"preserve" layer configs (fail2ban, sshd, rsyslog)
-  output/                     generated CSVs and PNGs (rerun detector.py / simulate_lockout.py)
-  README.md                   detection-rule thresholds, output-file reference, assumptions
-images/                     copies of the PNG figures embedded in the written report
-SIT_CSC3106_Mini_Project_and_Labs-2.pdf   the assignment brief (not our submission)
+1_auth.log.txt       our assigned log extract (12,000 lines, host web01, 6-12 Jul)
+part1/                data-driven analysis: parsing, summary tables, 3 figures
+  analysis.py           the parser + analysis script
+  risk_matrix.md         asset-focused risk matrix, cross-referenced to output/
+  output/                generated CSVs and PNGs, rerun analysis.py to regenerate
+  README.md              parsing decisions, output-file reference, assumptions
+part2/                technical defensive response to the Part 1 findings
+  detector.py            "detect" layer, three alerting rules
+  simulate_lockout.py    tests the "prevent" layer against the real extract
+  authlog_parsing.py     parsing shared with Part 1, kept identical on purpose
+  config/                prevent/preserve configs (fail2ban, sshd, rsyslog)
+  output/                generated CSVs and PNGs, rerun detector.py / simulate_lockout.py
+  README.md              detection thresholds, output-file reference, assumptions
+images/               PNG figures embedded in the written report
+SIT_CSC3106_Mini_Project_and_Labs-2.pdf   the assignment brief, not our submission
 ```
 
 ## How the two parts connect
@@ -38,10 +34,10 @@ SIT_CSC3106_Mini_Project_and_Labs-2.pdf   the assignment brief (not our submissi
 Part 1's risk matrix rates Risk 3 as the structural gap behind everything
 else: `web01`'s SSH password login has no working rate limit or lockout, so
 117 guesses in a row simply never got interrupted. Part 2 is built to close
-that specific gap, and the response is tested (not just asserted) by
+that specific gap, and the response is tested by
 replaying the same extract through the proposed fail2ban policy in
 `simulate_lockout.py`. That closes the loop back to Risk 1 (the `deploy`
-compromise) and Risk 2 (the wider guessing campaign) in the same risk matrix.
+compromise) and Risk 2 in the same risk matrix.
 
 ## Quick start
 
@@ -62,9 +58,8 @@ and `part2/output/`.
 
 ## Where to go for what
 
-- Parsing decisions, argparse flags, and the full output-file reference for
-  Part 1: see `part1/README.md`.
-- Detection-rule thresholds, the fail2ban policy tested, and the full
-  output-file reference for Part 2: see `part2/README.md`.
-- Python version and package requirements are documented in `part1/README.md`
-  (same requirements apply to both parts).
+Parsing decisions, argparse flags, and the output-file reference for Part 1
+are all in `part1/README.md`. Same deal for Part 2's detection thresholds and
+the fail2ban policy in `part2/README.md`. Python version and package
+requirements are only written down once, in `part1/README.md`, since both
+parts need the same thing.
