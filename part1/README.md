@@ -126,6 +126,7 @@ different process entirely.
 | `privileged_account_targeting.csv` | Just the privileged-account numbers pulled out separately. |
 | `brute_force_success.csv` | The burst-then-success detection output. This is where the 117-attempt finding lives. |
 | `sudo_commands.csv` | Every sudo command line we parsed, for checking what happened post-login. |
+| `command_frequency.csv` | Count of each distinct sudo command across the extract. Backs the Part 1 claim that the post-compromise command (`systemctl restart apache2`) isn't unusual on its own. |
 | `unmatched_lines.txt` | Whatever the parser couldn't classify (currently nothing). |
 
 ## Assumptions and limitations, so nobody assumes more than we found

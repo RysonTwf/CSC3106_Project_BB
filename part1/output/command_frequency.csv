@@ -1,0 +1,6 @@
+command,count
+/usr/bin/apt update,78
+/usr/bin/systemctl restart apache2,61
+/usr/bin/journalctl -n 50,53
+/usr/bin/du -sh /var/log,52
+/usr/bin/systemctl status ssh,48

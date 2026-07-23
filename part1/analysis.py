@@ -352,6 +352,20 @@ def build_sudo_commands(events):
     return rows
 
 
+def build_command_frequency(events):
+    """Counts how often each distinct sudo command string appears across
+    the whole extract. Exists specifically to make the Part 1 interpretation
+    claim ('this command is ordinary, it recurs elsewhere') a script-derived
+    number rather than something read off sudo_commands.csv by eye."""
+    commands = [e["sudo_command"] for e in events if e["event_type"] == "sudo_command"]
+    counts = Counter(commands)
+    rows = [
+        {"command": cmd, "count": c}
+        for cmd, c in counts.most_common()
+    ]
+    return rows
+
+
 # ---------------------------------------------------------------------------
 # Output helpers
 # ---------------------------------------------------------------------------
@@ -523,6 +537,7 @@ def main():
     brute_force = build_brute_force_success(events, streak_threshold=args.streak_threshold,
                                              burst_gap_minutes=args.burst_gap_minutes)
     sudo_cmds = build_sudo_commands(events)
+    command_frequency = build_command_frequency(events)
 
     write_csv(summary_counts, outdir / "summary_counts.csv")
     write_csv(top_ips, outdir / "top_source_ips.csv")
@@ -531,6 +546,7 @@ def main():
     write_csv(privileged, outdir / "privileged_account_targeting.csv")
     write_csv(brute_force, outdir / "brute_force_success.csv")
     write_csv(sudo_cmds, outdir / "sudo_commands.csv")
+    write_csv(command_frequency, outdir / "command_frequency.csv")
     write_unmatched_sample(unmatched, outdir / "unmatched_lines.txt")
 
     plot_top_source_ips(top_ips, outdir / "top_source_ips.png")
