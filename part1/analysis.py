@@ -416,14 +416,19 @@ def plot_failed_attempts_over_time(rows, path):
     counts = [r["failed_password_count"] for r in rows]
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.bar(dates, counts, color=COLOR_CATEGORICAL_BLUE, width=0.6)
+    ax.plot(dates, counts, color=COLOR_CATEGORICAL_BLUE, linewidth=2,
+            marker="o", markersize=5, markerfacecolor=COLOR_CATEGORICAL_BLUE,
+            markeredgecolor="#fcfcfb", markeredgewidth=1)
+    ax.fill_between(range(len(dates)), counts, color=COLOR_CATEGORICAL_BLUE, alpha=0.08)
     _style_axes(ax, grid_axis="y")
     ax.set_xlabel("Date")
     ax.set_ylabel("Failed password attempts")
     ax.set_title("Failed authentication attempts per day")
     ax.tick_params(axis="x", rotation=30)
+    ax.set_ylim(bottom=0)
     for i, count in enumerate(counts):
-        ax.text(i, count + max(counts) * 0.01, str(count), ha="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
+        ax.annotate(str(count), (i, count), textcoords="offset points", xytext=(0, 8),
+                    ha="center", fontsize=8, color=COLOR_TEXT_PRIMARY)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)

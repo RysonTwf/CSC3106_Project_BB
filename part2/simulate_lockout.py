@@ -132,21 +132,31 @@ def plot_blocked_bars(stats, path):
     other_seen = sum(s["failed_seen"] for ip, s in stats.items() if ip not in campaign_ips)
     other_blocked = sum(s["failed_blocked"] for ip, s in stats.items() if ip not in campaign_ips)
     labels = [ip for ip, _ in rows] + ["all other IPs\n(12 IPs)"]
+    seen = [s["failed_seen"] for _, s in rows] + [other_seen]
     blocked = [s["failed_blocked"] for _, s in rows] + [other_blocked]
-    got_through = [s["failed_seen"] - s["failed_blocked"] for _, s in rows] + [other_seen - other_blocked]
+    # Share of each IP's failed attempts blocked, not the raw count: the
+    # campaign IPs' attempt volumes are two orders of magnitude apart, so a
+    # 100%-stacked view is what actually makes "did the policy work for this
+    # IP" comparable across rows.
+    blocked_pct = [100 * b / t if t else 0 for b, t in zip(blocked, seen)]
+    got_through_pct = [100 - p for p in blocked_pct]
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
     y = range(len(labels))
     bar_height = 0.6
     # A thin surface-color edge between segments stands in for the "2px surface
     # gap" mark spec - it separates the two stacked states without extra ink.
-    ax.barh(y, blocked, height=bar_height, color=color_good, edgecolor=color_surface, linewidth=1.5,
+    ax.barh(y, blocked_pct, height=bar_height, color=color_good, edgecolor=color_surface, linewidth=1.5,
             label="blocked by policy (never reached sshd)")
-    ax.barh(y, got_through, left=blocked, height=bar_height, color=color_critical,
+    ax.barh(y, got_through_pct, left=blocked_pct, height=bar_height, color=color_critical,
             edgecolor=color_surface, linewidth=1.5, label="got through to sshd")
+    for i, (bp, t) in enumerate(zip(blocked_pct, seen)):
+        ax.annotate(f"{bp:.0f}% of {t}", (100, i), textcoords="offset points", xytext=(6, 0),
+                    va="center", fontsize=8, color=color_text)
     ax.set_yticks(list(y))
     ax.set_yticklabels(labels)
     ax.invert_yaxis()
+    ax.set_xlim(0, 130)
     ax.set_axisbelow(True)
     ax.grid(axis="x", color=color_grid, linewidth=0.8)
     ax.spines["top"].set_visible(False)
@@ -154,8 +164,8 @@ def plot_blocked_bars(stats, path):
     ax.spines["left"].set_color(color_baseline)
     ax.spines["bottom"].set_color(color_baseline)
     ax.tick_params(colors=color_muted, labelcolor=color_muted)
-    ax.set_xlabel("Failed password attempts", color=color_text)
-    ax.set_title("Failed attempts blocked under the proposed fail2ban policy", color=color_text)
+    ax.set_xlabel("Share of failed password attempts (%)", color=color_text)
+    ax.set_title("Share of failed attempts blocked under the proposed fail2ban policy", color=color_text)
     ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.12),
               ncol=2, frameon=False)
     fig.tight_layout()
